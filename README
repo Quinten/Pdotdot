@@ -1,1 +1,17 @@
-Hello Pdotdot
+Pdotdot or more simplistic P.. is a simple code editor for processing.js code that runs inside of the browser. It's made for coding on the go and is tailored for mobile devices (iPad, iPhone, Android,...).
+Thanks to it's caching and localStorage mechanisms you can continue coding even when there's no connection to the network.
+
+All your scripts are stored locally and can quickly be accessed through a selectbox. When you are done editing your code, simply press the 'P' button to play the animation. Finally when you are satisfied with the result you can post it to an export-script on the server, which will save a .pjs-file and return a url, an optional bit.ly shortened url and a simple embed script, so you can share it with others.
+
+Also funny to note is that, when you add it to your homescreen, it creates a dynamic icon that changes colors each time you open the app.
+
+Try a demo at http://p.strafspul.be or read the blogpost http://strafspul.be/lg/p
+
+Also i find http://processingjs.org/reference a very usefull link while coding.
+
+To get started with modifying, tweaking, forking your own IDE:
+- deploy all the files on a webserver (preferably with php on it)
+- be sure to include the .htaccess file
+- chmod the 'cache' folder to 777
+- modify the settings in config.php
+- add your own flavor to it

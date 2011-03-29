@@ -1,0 +1,9 @@
+php_flag register_globals On
+php_flag file_uploads On
+php_flag display_errors on
+php_value upload_max_filesize 20M
+php_value post_max_size 20M
+
+Options +FollowSymlinks
+RewriteEngine on
+RewriteRule ^sketch/(.*)$ /view.php?sk=$1 [NC]

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html manifest="pmanifest.php">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>P..</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<link rel="apple-touch-icon-precomposed" href="icon.php" />
+<link rel="icon" href="icon.php" type="image/png" />
+<style type="text/css">
+  html, body{width: 100%; padding: 0; margin: 0;}
+  body{background: #eee; font-family:"Courier New", Courier, monospace; font-size: 14px;}
+  .toolbar{height: 60px; background: #eee;}
+  #editbox {width: 100%; padding: 0; border: 1px #777 solid; font-family:"Courier New", Courier, monospace; font-size: 14px;}
+  #embedbox {width: 320px; height: 160px; padding: 0; background: #fff; border: 0; font-family:"Courier New", Courier, monospace; font-size: 12px;}
+  .roundbutton{width: 50px; height: 50px; margin: 5px;}
+  #sketchselect, .flatbutton{float: right; height: 20px; margin: 20px 5px 20px 5px;}
+  p {padding: 0 20px 0 20px;}
+</style>
+<script src="jquery-1.5.min.js"></script>
+<script src="processing-1.0.0.min.js"></script>
+</head>
+<body onorientationchange="onO();">
+<div id="player">
+  <div class="toolbar">
+    <button onclick="stopSketch();" class="roundbutton">C</button>
+    <button onclick="exportSketch();" class="flatbutton">Export</button>
+  </div>
+<canvas id="canvas"></canvas>
+</div>
+<div id="editor">
+  <div class="toolbar">
+    <button onclick="startSketch();" class="roundbutton">P</button>
+    <select id="sketchselect" onchange="onC();"></select>
+  </div>
+<textarea id="editbox" onkeyup="onK();"></textarea>
+  <div style="text-align:right;">
+    <a href="http://strafspul.be/lg/p">about this IDE</a>&nbsp;|&nbsp;<a href="http://processingjs.org/reference/">processingjs reference</a>&nbsp;
+  </div>
+</div>
+<div id="sharepage">
+  <div class="toolbar">
+    <button onclick="reshowEditor();" class="roundbutton">C</button>
+  </div>
+  <p>Raw link:</p>
+  <p id="rawlinkbox" style="font-size:12px;">&nbsp;</p>
+  <p>&nbsp;</p>
+  <p>Short link:</p>
+  <p id="shortlinkbox" style="font-size:12px;">&nbsp;</p>
+  <p>&nbsp;</p>
+  <p>Embedcode:</p>
+  <p>
+    <textarea id="embedbox"></textarea>
+  </p>
+</div>
+<script type="application/javascript">
+  var sketchdb = "sketchbookArr3";
+  var sketchid = "currentSketch3";
+  var currentid;
+  var sketchbookArr;
+  var currentSketch;
+  var processingInstance;
+  hide('player');
+	hide('sharepage');
+  if (localStorage.getItem(sketchdb)){
+    sketchbookArr = JSON.parse(localStorage.getItem(sketchdb));
+  }else{
+    sketchbookArr = new Array();
+  }
+  if (localStorage.getItem(sketchid)){
+    currentid = localStorage.getItem(sketchid);
+  }else{
+    promptForName();  
+  }
+  setSketch(currentid);
+  fillUpSelect();
+  onK();
+  // prompts the user to enter a name for his new sketch
+  function promptForName(){
+    var currentSketchName;
+    var newid = sketchbookArr.length;
+    currentSketchName = prompt("Enter a name for the sketch:", "Untitled" + newid);
+    if(!currentSketchName){
+      currentSketchName = "Untitled" + newid;
+    }
+    currentSketch = {
+      sName: currentSketchName, 
+      sCode: "void setup(){\n  size(550, 400);\n  frameRate(25);\n}\n\nvoid draw(){\n  background(255);\n}",
+      sID: newid,
+      sUID: ""
+    };
+    localStorage.setItem(sketchid, newid);
+    sketchbookArr.push(currentSketch);
+    localStorage.setItem(sketchdb, JSON.stringify(sketchbookArr));
+    currentid = newid;
+  }
+  // fills the select box with sketches from localstorage
+  function fillUpSelect(){
+    var htmlstr = '<option value="">NEW</option>';
+    for(var s in sketchbookArr){
+      if(s == currentid){
+        htmlstr += '<option value="' + s + '" selected="selected">' + sketchbookArr[s].sName + '</option>';
+      }else{
+        htmlstr += '<option value="' + s + '">' + sketchbookArr[s].sName + '</option>';
+      }
+    }
+    var selectbox = document.getElementById('sketchselect');
+    selectbox.innerHTML = htmlstr;
+  }
+  // opens a sketch for editing
+  function setSketch(id){
+    currentid = id;
+    localStorage.setItem(sketchid, currentid);
+    currentSketch = sketchbookArr[currentid];
+    var box = document.getElementById('editbox');
+    box.value = currentSketch.sCode;
+    box.style.height = "5px";
+    onK();
+  }
+  // exports a sketch for sharing, embedding,... (see config.php for settings)
+  function exportSketch(){
+     var canvas=document.getElementById("canvas");
+     var postvars = {sUID: currentSketch.sUID, sCode: currentSketch.sCode, fWidth: canvas.width, fHeight: canvas.height};
+     $.post("export.php", postvars, function(data){
+        // save uid locally
+        currentSketch.sUID = data.sUID;
+        sketchbookArr[currentid] = currentSketch;
+        localStorage.setItem(sketchdb, JSON.stringify(sketchbookArr));
+        // show data
+        document.getElementById('rawlinkbox').innerHTML = data.rawLink;
+        document.getElementById('shortlinkbox').innerHTML = data.shortLink;
+        var embedbox = document.getElementById('embedbox');
+        embedbox.value = data.embedCode;
+        hide('player');
+        show('sharepage');
+        if(processingInstance){
+          switchSketchState(false);
+        }
+      }, "json");
+  }
+  // saves the sketch, switches the view to the player and plays it
+  function startSketch() {
+    hide('editor');
+    show('player');
+    var box = document.getElementById('editbox');
+    var sketch = box.value;
+    //save
+    currentSketch.sCode = sketch;
+    sketchbookArr[currentid] = currentSketch;
+    localStorage.setItem(sketchdb, JSON.stringify(sketchbookArr));
+    //render
+    var canvas=document.getElementById("canvas");
+    processingInstance = new Processing(canvas,sketch);
+    //switchSketchState(true);
+  }
+  function stopSketch() {
+    if(processingInstance){
+      switchSketchState(false);
+    }
+    hide('player');
+    show('editor');
+  }
+  // pauses or plays an animation
+  function switchSketchState(on) {
+    if (!processingInstance) {
+      processingInstance = Processing.getInstanceById('canvas');
+    }
+    if (on) {
+      processingInstance.loop();  // call Processing loop() function
+    } else {
+      processingInstance.noLoop(); // stop animation, call noLoop()
+    }
+  }
+  function reshowEditor(){
+    hide('sharepage');
+    show('editor');
+  }
+  // open a sketch from the select box
+  function onC(){
+    var selectbox = document.getElementById('sketchselect');
+    var targetid = selectbox.value;
+    //alert(targetid);
+    if(targetid != ""){
+      setSketch(targetid);
+    }else{
+      promptForName();
+      setSketch(currentid);
+      fillUpSelect();
+      onK();
+    }
+  }
+  // adjust editing textfield height on keydown
+  function onK(){
+    var box = document.getElementById('editbox');
+    box.style.height = (parseFloat(box.style.height.substr(0, box.style.height.length - 2))- 20)  + "px";
+    box.style.height = box.scrollHeight + "px";
+  }
+  // adjust editing textfield width on device rotation
+  function onO(){
+    var box = document.getElementById('editbox');
+    box.style.width = "100%";
+  }
+  function hide(id){
+    var element = document.getElementById(id);
+    element.style.display = "none";
+  }
+  function show(id){
+    var element = document.getElementById(id);
+    element.style.display = "inline";
+  }
+</script>
+</body>
+</html>
