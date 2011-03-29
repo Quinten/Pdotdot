@@ -1,0 +1,1 @@
+This folder should be writable, preferably chmoded to 777
