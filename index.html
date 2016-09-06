@@ -71,7 +71,7 @@
   if (localStorage.getItem(sketchid)){
     currentid = localStorage.getItem(sketchid);
   }else{
-    promptForName();  
+    promptForName();
   }
   setSketch(currentid);
   fillUpSelect();
@@ -85,7 +85,7 @@
       currentSketchName = "Untitled" + newid;
     }
     currentSketch = {
-      sName: currentSketchName, 
+      sName: currentSketchName,
       sCode: "void setup(){\n  size(550, 400);\n  frameRate(25);\n}\n\nvoid draw(){\n  background(255);\n}",
       sID: newid,
       sUID: ""
