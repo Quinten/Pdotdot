@@ -62,7 +62,7 @@
   var currentSketch;
   var processingInstance;
   hide('player');
-	hide('sharepage');
+  hide('sharepage');
   if (localStorage.getItem(sketchdb)){
     sketchbookArr = JSON.parse(localStorage.getItem(sketchdb));
   }else{
@@ -70,30 +70,35 @@
   }
   if (localStorage.getItem(sketchid)){
     currentid = localStorage.getItem(sketchid);
+    setSketch(currentid);
+    fillUpSelect();
+    onK();
   }else{
     promptForName();
   }
-  setSketch(currentid);
-  fillUpSelect();
-  onK();
   // prompts the user to enter a name for his new sketch
   function promptForName(){
-    var currentSketchName;
-    var newid = sketchbookArr.length;
-    currentSketchName = prompt("Enter a name for the sketch:", "Untitled" + newid);
-    if(!currentSketchName){
-      currentSketchName = "Untitled" + newid;
-    }
-    currentSketch = {
-      sName: currentSketchName,
-      sCode: "void setup(){\n  size(550, 400);\n  frameRate(25);\n}\n\nvoid draw(){\n  background(255);\n}",
-      sID: newid,
-      sUID: ""
-    };
-    localStorage.setItem(sketchid, newid);
-    sketchbookArr.push(currentSketch);
-    localStorage.setItem(sketchdb, JSON.stringify(sketchbookArr));
-    currentid = newid;
+    setTimeout(function () { // hack for http://stackoverflow.com/questions/18903525/alert-and-confirm-not-working-with-apple-mobile-web-app-capable
+      var currentSketchName;
+      var newid = sketchbookArr.length;
+      currentSketchName = prompt("Enter a name for the sketch:", "Untitled" + newid);
+      if(!currentSketchName){
+        currentSketchName = "Untitled" + newid;
+      }
+      currentSketch = {
+        sName: currentSketchName,
+        sCode: "void setup(){\n  size(550, 400);\n  frameRate(25);\n}\n\nvoid draw(){\n  background(255);\n}",
+        sID: newid,
+        sUID: ""
+      };
+      localStorage.setItem(sketchid, newid);
+      sketchbookArr.push(currentSketch);
+      localStorage.setItem(sketchdb, JSON.stringify(sketchbookArr));
+      currentid = newid;
+      setSketch(currentid);
+      fillUpSelect();
+      onK();
+    }, 0);
   }
   // fills the select box with sketches from localstorage
   function fillUpSelect(){
@@ -185,9 +190,6 @@
       setSketch(targetid);
     }else{
       promptForName();
-      setSketch(currentid);
-      fillUpSelect();
-      onK();
     }
   }
   // adjust editing textfield height on keydown
